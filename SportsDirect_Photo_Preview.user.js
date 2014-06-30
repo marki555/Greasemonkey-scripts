@@ -6,6 +6,7 @@
 // @include        https://*.sportsdirect.com/*
 // @version        0.2
 // @icon           http://www.sportsdirect.com/Portals/SD/favicon.ico
+// @license        GPL
 // ==/UserScript==
 
 // Code based on FFixer http://userscripts.org/scripts/show/8861 and my own PokecPreview

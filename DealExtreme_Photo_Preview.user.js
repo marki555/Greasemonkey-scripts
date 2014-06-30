@@ -9,6 +9,7 @@
 // @include        https://*.dx.com/*
 // @version        0.3
 // @icon           http://dx.com/favicon.ico
+// @license        GPL
 // ==/UserScript==
 
 // Code based on FFixer http://userscripts.org/scripts/show/8861 and my own PokecPreview

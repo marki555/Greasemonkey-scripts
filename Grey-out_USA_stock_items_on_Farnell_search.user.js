@@ -4,6 +4,7 @@
 // @description Grey-out USA stock items on Farnell search
 // @include     http://*.farnell.com/jsp/search/browse.jsp*
 // @version     1
+// @license	GPL
 // ==/UserScript==
 
 // original: http://en.kioskea.net/faq/2095-personalize-web-pages-with-greasemonkey

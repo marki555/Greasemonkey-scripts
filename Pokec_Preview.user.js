@@ -7,6 +7,7 @@
 // @include        http://*.zive.sk/*
 // @icon           http://www.azet.sk/favicon.ico
 // @version        0.6
+// @license        GPL
 // ==/UserScript==
 
 // Code based on FFixer http://userscripts.org/scripts/show/8861

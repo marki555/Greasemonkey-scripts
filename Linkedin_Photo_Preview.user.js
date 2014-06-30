@@ -8,6 +8,7 @@
 // @icon           https://static.licdn.com/scds/common/u/images/logos/favicons/v1/favicon.ico
 // @grant	   GM_log
 // @grant	   GM_addStyle
+// @license        GPL
 // ==/UserScript==
 
 // Code based on FFixer http://userscripts.org/scripts/show/8861 and my own PokecPreview
