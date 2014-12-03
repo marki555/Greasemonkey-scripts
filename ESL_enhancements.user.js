@@ -1,11 +1,14 @@
 // ==UserScript==
 // @name        ESL enhancements
-// @namespace   https://github.com/marki555
-// @description	ESL enhancements (full width) by hpepodma
-// @include     https://eu-i.svcs.hp.com/pls/*
-// @include	http://eslweb.gre.omc.hp.com/pls/*
-// @include	http://esl.corp.hp.com/pls/*
-// @version     0.1
+// @namespace   marki555
+// @description	ESL enhancements (full width)
+// @include     https://eu-i.*.*.com/pls/*
+// @include	http://eslweb.*.omc.*.com/pls/*
+// @include	http://esl.*.*.com/pls/*
+// @include	http://*rockweb.*.*.com/pls/*
+// @include	http://esl-prd-v.*.omc.*.com/pls/*
+// @include	http://iesl*.*.omc.*.com/pls/*
+// @version     0.1.1
 // @grant       GM_log
 // ==/UserScript==
 
