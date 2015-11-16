@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name           Pokec Preview
-// @namespace      https://github.com/marki555
+// @namespace      marki
 // @description    Preview profile images on Pokec/AZet
 // @include        http://*.azet.sk/*
 // @include        http://*.aktuality.sk/*
 // @include        http://*.zive.sk/*
 // @icon           http://www.azet.sk/favicon.ico
-// @version        0.6
-// @license        GPL
+// @grant	GM_setValue
+// @grant	GM_getValue
+// @grant	GM_xmlhttpRequest
+// @version        1.2
 // ==/UserScript==
 
 // Code based on FFixer http://userscripts.org/scripts/show/8861
@@ -16,6 +18,12 @@
 // v0.4 - 2011-06-14 - show popup on left if thumbnail is on right
 // v0.5 - 2012-01-23 - added support for new image urls, added icon, added search URL aktuality.sk
 // v0.6 - 2012-04-05 - again new URL (m1.aimg.sk instead of m.aimg.sk)
+// v1.1 - 2015-04-17 - all profile pics are now protected; need to fetch user profile to get URL of full size pic
+// v1.2 - 2015-05-03 - on profile page, show date of last visit
+//        2015-05-09 - show date of last visit also on list of users page
+
+// *** WARNING: ***
+// This version won't work without changing URL http://XXXX/azet_prof_img.php to your copy of PHP script
 
 (function() {
 
@@ -27,25 +35,56 @@ var hidePopupPicTimeout;
 //
 addStyle(
 	'.fbfPopup { padding:10px; background:#f6f6f6; border:3px double #666666; -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px; border-radius:5px; }'+
-	'.ff-popup-default { max-width:450px; margin:100px auto; }'+
-	'.fbfPopupContainer { display:none; top:0; right:0; bottom:0; left:0; }'+
 	'#qq-popup-div { display:none; background:white; border:1px solid #333; position:fixed !important; top:3px !important; padding:4px; min-width:130px; z-index:99999 !important; -moz-border-radius:3px; -webkit-border-radius:3px; -khtml-border-radius:3px; border-radius:3px; }'+
 	'.qq-popup-div { right:3px !important; left:auto !important; -moz-box-shadow:-5px 5px 5px rgba(0,0,0,0.6); -webkit-box-shadow:-5px 5px 5px rgba(0,0,0,0.6); -khtml-box-shadow:-5px 5px 5px rgba(0,0,0,0.6); box-shadow:-5px 5px 5px rgba(0,0,0,0.6); }'+
 	'.qq-popup-div-left  { left: 3px !important; right:auto !important; -moz-box-shadow:5px 5px 5px rgba(0,0,0,0.6); -webkit-box-shadow:5px 5px 5px rgba(0,0,0,0.6); -khtml-box-shadow:5px 5px 5px rgba(0,0,0,0.6); box-shadow:5px 5px 5px rgba(0,0,0,0.6); }'+
 	'.qq-popup-div-right { right:3px !important; left:auto  !important; -moz-box-shadow:-5px 5px 5px rgba(0,0,0,0.6); -webkit-box-shadow:-5px 5px 5px rgba(0,0,0,0.6); -khtml-box-shadow:-5px 5px 5px rgba(0,0,0,0.6); box-shadow:-5px 5px 5px rgba(0,0,0,0.6); }'+
-	'#ff-popup-pic-div img { max-height: ' + (window.innerHeight-35) + 'px; }'+
 	'#qq-pic-close { display:none; position:absolute; top:4px; right:10px; color:#ff9999; cursor:pointer; font-weight:bold; font-size:14px; }'+
 	'#qq-popup-div:hover #ff-popup-pic-close { display:block; }'+
 	'#qq-pic-close:hover { color:#aa6666; }'+
 	'#ff-popup-pic-image { text-align:center; }'+
 	'#ff-popup-pic-image img { color:#999999; display:block; }'+
-	'#fbfUpdatePopup { max-width:450px; margin:100px auto; padding:10px; }'+
-	'.fbfImportant { font-weight:bold; }'+
-	'.fbfNote { color:#777777; }'+
-	'.fbfRight { text-align:right; }'+
-	'.ad_story .social_ad_advert { z-index:0; }'
+	'#visitDiv { text-align: center; }'
 );
 
+
+// profile page visits
+function insertAfter(newNode, referenceNode) { referenceNode.parentNode.insertBefore( newNode, referenceNode.nextSibling );}
+var last, Nick, text;
+if (/http:\/\/pokec\.azet\.sk\/[^/]+\/?\?i9/.test(location)) {
+  Nick = location.toString().replace(/\/?\?.*$/, "");
+  Nick = Nick.replace(/http:\/\/pokec\.azet\.sk\//, "");
+  console.log("Profile page for "+Nick);
+  last = GM_getValue("lastProf-"+Nick,"");
+  if (!last) text="<b>Profil este nebol pozrety</b>"; else text="Posledna navsteva: <b>"+last+"</b>";
+  var metaViz  = document.evaluate("//div[@class='metaVizitka']", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+  var visitDiv = document.createElement('div');
+  visitDiv.id  = 'visitDiv';
+  visitDiv.innerHTML = '<div>'+text+'</div>';
+  insertAfter(visitDiv, metaViz);
+  last = new Date();
+  text = last.getDate() +"."+ (last.getMonth()+1) +"."+ last.getFullYear();
+  GM_setValue("lastProf-"+Nick, text);
+}
+
+
+// list of users (add profile visits)
+var allLinks, thisLink, i;
+if (/http:\/\/pokec\.azet\.sk\/sluzby\/pouzivatelia\//.test(location)) {
+  allLinks = document.evaluate('//div[@class="userContainer"]//h3//a', document, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+  for (var i = 0; i < allLinks.snapshotLength; i++) {
+    thisLink = allLinks.snapshotItem(i);
+    Nick = thisLink.href.toString().replace(/\/?\?.*$/, "");
+    Nick = Nick.replace(/http:\/\/pokec\.azet\.sk\//, "");
+    //console.log("Profile link found for "+Nick);
+    last = GM_getValue("lastProf-"+Nick,"");
+    if (last) {
+      visitDiv = document.createElement('div');
+      visitDiv.innerHTML = '<div style="padding-left:10px;font-weight:bold;font-size:80%;color:#3878C0">'+last+'</div>';
+      insertAfter(visitDiv, thisLink);
+    }
+  }
+}
 
 //
 // Add div for showing big profile pics
@@ -65,7 +104,7 @@ try {
 			document.getElementById('qq-pic-close').addEventListener('click', function() { document.getElementById('qq-popup-div').style.display='none'; }, false);
 			if ($('#qq-popup-div')) { clearInterval(fbppdivAdder); }
 		} catch(x) {}
-	}, 500);
+	}, 250);
 }
 // Listeners are added by the code for showing the popups
 
@@ -92,29 +131,56 @@ try {
 picRegex = /http:\/\/(u\.aimg\.sk|213\.215\.107\.[0-9]+)\/fotky\/[0-9]+\/[0-9]{2}\/[nsm]_([0-9]+\.jpg)/;
 albRegex = /http:\/\/(u\.aimg\.sk|213\.215\.107\.[0-9]+)\/fotoalbumy\/[0-9]+\/[0-9]+\/nf_[0-9]+_[0-9a-f]+\.jpg/;
 newRegex = /http:\/\/m[0-9]*\.aimg\.sk\/profil\/[nsm]_([0-9]+\.jpg)/;
+proRegex = /http:\/\/t[0-9]*\.aimg\.sk\/pokec\/fotoalbumy\/[0-9]+\/[0-9a-f_]+\.jpg/;
 
 function showPopupPic(e) {
 	try {
 		var t = e.target;
 		var oldSrc;
 		var newSrc;
-		var title;
 
 		if (t.tagName == 'IMG' && picRegex.test(t.src)) { newSrc = t.src.replace(/[nsm]_/, ""); }
 		if (t.tagName == 'IMG' && albRegex.test(t.src)) { newSrc = t.src.replace(/nf_/   , "mf_"); }
 		if (t.tagName == 'IMG' && newRegex.test(t.src)) { newSrc = t.src.replace(/[nsm]_/, ""); }
+		if (t.tagName == 'IMG' && proRegex.test(t.src)) { newSrc = GM_getValue(t.src, ""); if (newSrc) console.log("From cache: "+newSrc); } // fetch URL from local storage
 
 		if (oldSrc || newSrc) {
 			clearTimeout(hidePopupPicTimeout);
 			t.removeEventListener('mouseout', hidePopupPic, false);
 			t.addEventListener('mouseout', hidePopupPic, false);
 			showPopupPicTimeout = setTimeout(function(){
-				$('#ff-popup-pic-image').innerHTML = '<img src="' + newSrc + '" alt="PokecPreview - Nacitavam..." style="max-height:' + (window.innerHeight-35) + 'px;"/>'; // + title;
+				$('#ff-popup-pic-image').innerHTML = '<img src="' + newSrc + '" alt="PokecPreview - Nacitavam..." style="max-height:' + (window.innerHeight-35) + 'px;"/>';
 				$('#qq-popup-div').style.display = 'block';
-//				$('#qq-popup-div').className = 'fbfPopup qq-popup-div';
 				$('#qq-popup-div').className = 'fbfPopup qq-popup-div-' + (e.pageX>document.body.clientWidth/2 ? 'left' : 'right');
-			}, 1000);
+			}, 250);
 		}
+		/* 2015-04-17: all profile photos are now fotoalbum protected images; 1st fetch users profile */
+		// on List of users, there is parent DIV, then A
+		if (!newSrc && t.tagName == 'IMG' && proRegex.test(t.src) && ((t.parentNode.tagName=='A') || (t.parentNode.parentNode.tagName=='A'))) {
+			var nick;
+			if (t.parentNode.tagName=='A') nick = t.parentNode.href; else nick = t.parentNode.parentNode.href;
+			if (!/http:\/\/pokec\.azet\.sk\/[^/]+\/?\?i9/.test(nick)) { console.log("No profile: "+nick); return; }
+			nick = nick.replace(/\/\?.*$/, "");
+			nick = nick.replace(/http:\/\/pokec\.azet\.sk\//, "");
+			clearTimeout(hidePopupPicTimeout);
+			t.removeEventListener('mouseout', hidePopupPic, false);
+			t.addEventListener('mouseout', hidePopupPic, false);
+			showPopupPicTimeout = setTimeout(function(){
+				newSrc = "";
+				$('#ff-popup-pic-image').innerHTML = '<img src="' + newSrc + '" alt="PokecPreview - Nacitavam..." style="max-height:' + (window.innerHeight-35) + 'px;"/>';
+				$('#qq-popup-div').style.display = 'block';
+				$('#qq-popup-div').className = 'fbfPopup qq-popup-div-' + (e.pageX>document.body.clientWidth/2 ? 'left' : 'right');
+				GM_xmlhttpRequest({ method: "GET", url: "http://XXXX/azet_prof_img.php?nick="+nick, timeout: 5000, onload: function(resp) {
+					var r = resp.responseText;
+					$('#ff-popup-pic-image').innerHTML = '<img src="' +r+ '" alt="Foto '+nick+'" style="max-height:'+(window.innerHeight-35)+'px;"/>';
+					//console.log("Image big: "+r);
+					if (/jpg/.test(r)) GM_setValue(t.src, r);
+					//var match;
+					//if (match = /property="og:image" content="(.*)"/.exec(resp.responseText)) { $('#ff-popup-pic-image').innerHTML = '<img src="' + match[1] + '" style="max-height:'+(window.innerHeight-35)+'px;"/>'; console.log("Image big: "+match[1]); }
+				} });
+			}, 250);
+		}
+
 	} catch(x) { logError('Popup Pic', x); }
 }
 
@@ -138,17 +204,9 @@ function hidePopupPic(e) {
 	}
 }
 
-// Log an error
 function logError(category, x) {
-	msg = "FBF Error (" + category + ") - " +  x.name + ' - ' + x.message + ' in file <' + x.fileName + '> on line ' + x.lineNumber + ' while viewing ' + page;
-	log(msg);
-}
-
-function log(str) {
-	if (typeof debug !== 'undefined') { debug(str); }
-	if (typeof GM_log !== 'undefined') { GM_log(str); return true; }
-	else if (typeof console !== 'undefined' && console.log) { console.log(str); return true; }
-	return false;
+	msg = "PokecPreview Error (" + category + ") - " +  x.name + ' - ' + x.message + ' in file <' + x.fileName + '> on line ' + x.lineNumber;
+	console.log(msg);
 }
 
 function $(q, root, single) {
